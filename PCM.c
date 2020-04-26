@@ -65,6 +65,7 @@
  */
 
 int speakerPin = 11;
+int speakerPin2 = 3; // abu
 unsigned char const *sounddata_data=0;
 int sounddata_length=0;
 volatile uint16_t sample;
@@ -79,10 +80,12 @@ ISR(TIMER1_COMPA_vect) {
     else {
       // Ramp down to zero to reduce the click at the end of playback.
       OCR2A = sounddata_length + lastSample - sample;
+	  OCR2B = sounddata_length + lastSample - sample; // abu
     }
   }
   else {
     OCR2A = pgm_read_byte(&sounddata_data[sample]);
+	OCR2B = pgm_read_byte(&sounddata_data[sample]); // abu
   }
   
   ++sample;
@@ -94,27 +97,45 @@ void startPlayback(unsigned char const *data, int length)
   sounddata_length = length;
 
   pinMode(speakerPin, OUTPUT);
+  pinMode(speakerPin2, OUTPUT); // abu
   
   // Set up Timer 2 to do pulse width modulation on the speaker
   // pin.
   
+  // ASSR Bit 6 – EXCLK: Enable External Clock Input
+  // When EXCLK is written to one, and asynchronous clock is selected, the external clock input buffer is enabled and an
+  // external clock can be input on timer oscillator 1 (TOSC1) pin instead of a 32kHz crystal. Writing to EXCLK should be done
+  // before asynchronous operation is selected. Note that the crystal oscillator will only run when this bit is zero.
+
+  // ASSR Bit 5 – AS2: Asynchronous Timer/Counter2
+  // When AS2 is written to zero, Timer/Counter2 is clocked from the I/O clock, clk I/O . When AS2 is written to one,
+  // Timer/Counter2 is clocked from a crystal oscillator connected to the timer oscillator 1 (TOSC1) pin. When the value of AS2 is
+  // changed, the contents of TCNT2, OCR2A, OCR2B, TCCR2A and TCCR2B might be corrupted.
+  
   // Use internal clock (datasheet p.160)
   ASSR &= ~(_BV(EXCLK) | _BV(AS2));
   
-  // Set fast PWM mode  (p.157)
+  // Set fast PWM mode 
+  // WGM2[2:0]=011
+  // Timer/Counter Mode of Operation=Fast PWM, TOP=0xFF, Update of OCRx at=BOTTOM, TOV Flag Set on=MAX
   TCCR2A |= _BV(WGM21) | _BV(WGM20);
   TCCR2B &= ~_BV(WGM22);
   
-  // Do non-inverting PWM on pin OC2A (p.155)
-  // On the Arduino this is pin 11.
+  // Do non-inverting PWM on pin OC2A, On the Arduino this is pin 11.
+  // COM2A[1:0]=10 , Clear OC2A on compare match, set OC2A at BOTTOM, (non-inverting mode).
   TCCR2A = (TCCR2A | _BV(COM2A1)) & ~_BV(COM2A0);
-  TCCR2A &= ~(_BV(COM2B1) | _BV(COM2B0));
+
+  // Do inverting PWM on pin OC2B, On the Arduino this is pin 3.
+  // COM2B[1:0]=11 , Set OC2B on compare match, clear OC2B at BOTTOM, (inverting mode).
+  TCCR2A = TCCR2A | _BV(COM2B1) | _BV(COM2B0); 
+  //TCCR2A = (TCCR2A | _BV(COM2B1)) & ~_BV(COM2B0); // Nom-inverting mode of pin 3
   
   // No prescaler (p.158)
-  TCCR2B = (TCCR2B & ~(_BV(CS12) | _BV(CS11))) | _BV(CS10);
+  TCCR2B = (TCCR2B & ~(_BV(CS22) | _BV(CS21))) | _BV(CS20); // CS2[2:0]=001 --> clk T2S /(no prescaling)
   
   // Set initial pulse width to the first sample.
   OCR2A = pgm_read_byte(&sounddata_data[0]);
+  OCR2B = pgm_read_byte(&sounddata_data[0]); // abu
   
   
   // Set up Timer 1 to send a sample every interrupt.
@@ -123,8 +144,11 @@ void startPlayback(unsigned char const *data, int length)
   
   // Set CTC mode (Clear Timer on Compare Match) (p.133)
   // Have to set OCR1A *after*, otherwise it gets reset to 0!
+  // WGM1[3:0]= 0100
+  // Mode=CTC Top=OCR1A (Update Of OCR1x at)=Immediate (TOV1 Flag Set on)=MAX
   TCCR1B = (TCCR1B & ~_BV(WGM13)) | _BV(WGM12);
   TCCR1A = TCCR1A & ~(_BV(WGM11) | _BV(WGM10));
+  
   
   // No prescaler (p.134)
   TCCR1B = (TCCR1B & ~(_BV(CS12) | _BV(CS11))) | _BV(CS10);
@@ -154,4 +178,5 @@ void stopPlayback()
   TCCR2B &= ~_BV(CS10);
   
   digitalWrite(speakerPin, LOW);
+  digitalWrite(speakerPin2, LOW); // abu
 }
