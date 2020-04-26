@@ -19,6 +19,7 @@
  *
  * References:
  *     Datasheet of ATmega328P
+ *     http://web.csulb.edu/~hill/ee444/Lectures/11%20c%20Timer%20with%20PWM.pdf
  *     http://www.uchobby.com/index.php/2007/11/11/arduino-sound-part-1/
  *     http://www.atmel.com/dyn/resources/prod_documents/doc2542.pdf
  *     http://www.evilmadscientist.com/article.php/avrdac
