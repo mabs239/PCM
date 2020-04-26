@@ -1,12 +1,15 @@
 /*
  * speaker_pcm
- *
- * Plays 8-bit PCM audio on pin 11 using pulse-width modulation (PWM).
+ * 
+ * Plays 8-bit differential PCM audio on pin 11 and pin 3 using 
+ * pulse-width modulation (PWM). This simplifies the hardware as speaker 
+ * can be directly connected to arduino pins without a coupling capaitor.
  * For Arduino with Atmega168 at 16 MHz.
  *
  * Uses two timers. The first changes the sample value 8000 times a second.
  * The second holds pin 11 high for 0-255 ticks out of a 256-tick cycle,
- * depending on sample value. The second timer repeats 62500 times per second
+ * depending on sample value. Pin 3 compements pin 11. 
+ * The second timer repeats 62500 times per second
  * (16000000 / 256), much faster than the playback rate (8000 Hz), so
  * it almost sounds halfway decent, just really quiet on a PC speaker.
  *
@@ -15,6 +18,7 @@
  * for the pulse width modulation, breaking PWM for pins 11 & 3.
  *
  * References:
+ *     Datasheet of ATmega328P
  *     http://www.uchobby.com/index.php/2007/11/11/arduino-sound-part-1/
  *     http://www.atmel.com/dyn/resources/prod_documents/doc2542.pdf
  *     http://www.evilmadscientist.com/article.php/avrdac
@@ -23,6 +27,7 @@
  *     http://www.gamedev.net/reference/articles/article442.asp
  *
  * Michael Smith <michael@hurts.ca>
+ * Abu Bakar Siddique <mabs239@gmail.com> (Added differential output)
  */
 
 #include <stdint.h>
