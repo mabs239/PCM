@@ -80,14 +80,15 @@ byte lastSample;
 // This is called at 8000 Hz to load the next sample.
 ISR(TIMER1_COMPA_vect) {
   if (sample >= sounddata_length) {
-    if (sample == sounddata_length + lastSample) {
-      stopPlayback();
-    }
-    else {
+	  sample = 0; // Repeat forever
+    // if (sample == sounddata_length + lastSample) {
+    //   stopPlayback();
+    // }
+    // else {
       // Ramp down to zero to reduce the click at the end of playback.
-      OCR2A = sounddata_length + lastSample - sample;
-	  OCR2B = sounddata_length + lastSample - sample; // abu
-    }
+    //   OCR2A = sounddata_length + lastSample - sample;
+	//   OCR2B = OCR2A; // abu
+    // }
   }
   else {
     OCR2A = pgm_read_byte(&sounddata_data[sample]);
