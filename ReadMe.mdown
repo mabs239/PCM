@@ -1,0 +1,6 @@
+
+# Arduino 32kB Sound Player
+ Plays 8-bit differential PCM audio on pin 11 and pin 3 using 
+ pulse-width modulation (PWM). This simplifies the hardware as speaker 
+ can be directly connected to arduino pins without a coupling capaitor.
+ 
